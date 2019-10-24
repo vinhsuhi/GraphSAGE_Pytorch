@@ -68,6 +68,7 @@ def calc_f1(y_true, y_pred):
     return f1_score(y_true, y_pred, average="micro"), f1_score(y_true, y_pred, average='macro')
 
 def evaluate(graphsage, batch_nodes, labels, args, mode="val"):   
+    batch_nodes = batch_nodes.cpu()
     t = time.time()    
     output = graphsage.forward(batch_nodes, mode=mode)
     if args.multiclass:
@@ -104,9 +105,9 @@ def train_(graphsage, train_nodes, val_nodes, labels, optimizer, epochs, batch_s
             t = time.time()
             optimizer.zero_grad()
             if multiclass:
-                _labels = torch.FloatTensor(labels[batch_nodes])
+                _labels = torch.FloatTensor(labels)[batch_nodes]
             else:
-                _labels = torch.LongTensor(labels[batch_nodes])
+                _labels = torch.LongTensor(labels)[batch_nodes]
             if cuda:
                 _labels = _labels.cuda()
 
