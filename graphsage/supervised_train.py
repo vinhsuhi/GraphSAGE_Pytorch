@@ -25,15 +25,11 @@ def parse_args():
     parser.add_argument('--learning_rate',    default=0.01,            help='Initial learning rate.', type=float)
     parser.add_argument('--concat',           default=True,            help='whether to concat', type=bool)
     parser.add_argument('--epochs',           default=10,              help='Number of epochs to train.', type=int)
-    # parser.add_argument('--dropout',          default=0.0,             help='Dropout rate (1 - keep probability).', type=float)
-    # parser.add_argument('--weight_decay',     default=0.0,             help='Weight for l2 loss on embedding matrix.', type=float)
     parser.add_argument('--max_degree',       default=25,              help='Maximum node degree.', type=int)
     parser.add_argument('--samples_1',        default=10,              help='Number of samples in layer 1', type=int)
     parser.add_argument('--samples_2',        default=25,              help='Number of samples in layer 2', type=int)
-    # parser.add_argument('--samples_3',        default=0,               help='Number of users samples in layer 3. (Only for mean model)', type=int)
     parser.add_argument('--dim_1',            default=128,             help='Size of output dim (final is 2x this, if using concat)', type=int)
     parser.add_argument('--dim_2',            default=128,             help='Size of output dim (final is 2x this, if using concat)', type=int)
-    # parser.add_argument('--random_context',   default=False,           help='Whether to use random context or direct edges', type=bool)
     parser.add_argument('--batch_size',       default=256,             help='Minibatch size.', type=int)
     parser.add_argument('--base_log_dir',     default='.',             help='Base directory for logging and saving embeddings')
     parser.add_argument('--print_every',      default=10,              help="How often to print training info.", type=int)
@@ -41,16 +37,9 @@ def parse_args():
     parser.add_argument('--validate_iter',    default=5000,            help="How often to run a validation minibatch.", type=int)
     parser.add_argument('--validate_batch_size', default=256,          help="How many nodes per validation sample.", type=int)
     parser.add_argument('--identity_dim',     default=0,               help='Set to positive value to use node_embedding_prep. Default 0.', type=int)
-    # parser.add_argument('--save_embeddings',  default=False,           help="Whether to save embeddings.", type=bool)
-    # parser.add_argument('--load_embedding_samples_dir',  default=None, help="Whether to load embedding samples.")
-    # parser.add_argument('--save_embedding_samples',  default=False,    help="Whether to save embedding samples", type=bool)
     parser.add_argument('--seed',             default=123,             help="Random seed", type=int)
-    # parser.add_argument('--load_adj_dir',     default=None,            help="Adj dir load")
-    # parser.add_argument('--save_model',       default=False,            help="Save model's parameters", type=bool)
-    # parser.add_argument('--load_model_dir',   default=None,           help="Load pretrain model")
     parser.add_argument('--no_feature',       default=False,          help='whether to use features')
 
-    # parser.add_argument('--sigmoid',          default=True,            help='whether to use sigmoid loss', type=bool)
 
     return parser.parse_args()
 
@@ -115,9 +104,9 @@ def train_(graphsage, train_nodes, val_nodes, labels, optimizer, epochs, batch_s
             t = time.time()
             optimizer.zero_grad()
             if multiclass:
-                _labels = Variable(torch.FloatTensor(labels[batch_nodes]))
+                _labels = torch.FloatTensor(labels[batch_nodes])
             else:
-                _labels = Variable(torch.LongTensor(labels[batch_nodes]))
+                _labels = torch.LongTensor(labels[batch_nodes])
             if cuda:
                 _labels = _labels.cuda()
 
