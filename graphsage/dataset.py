@@ -83,12 +83,12 @@ class Dataset:
         broken_count = 0
         self.num_total_node = 0
 
-        for node in G.nodes():
-            if not 'val' in G.node[node] or not 'test' in G.node[node]:
-                G.remove_node(node)
-                broken_count += 1
+        # for node in G.nodes():
+        #     if not 'val' in G.node[node] or not 'test' in G.node[node]:
+        #         G.remove_node(node)
+        #         broken_count += 1
 
-        print("Removed {:d} nodes that lacked proper annotations due to networkx versioning issues".format(broken_count))
+        # print("Removed {:d} nodes that lacked proper annotations due to networkx versioning issues".format(broken_count))
         self.G = G
         self.conversion = conversion
         self.num_total_node = len(G.nodes())
@@ -102,7 +102,7 @@ class Dataset:
         else:
             print("No features present.. Only identity features will be used.")
 
-        id_map = json.load(open(prefix + "-id_map.json"))
+        id_map = json.load(open(prefix + "-id2idx.json"))
         id_map = {conversion(k): int(v) for k, v in id_map.items()}
         idx2id = {v: k for k, v in id_map.items()}
         self.id_map = id_map
@@ -148,14 +148,14 @@ class Dataset:
         # Using id_maps.keys to control the node index
         self.nodes_ids = np.array([n for n in G.node.keys()])
 
-        if not train_all_edge:
-            self.train_nodes_ids = np.array([n for n in self.nodes_ids if not G.node[n]['val'] and not G.node[n]['test']])
-            self.val_nodes_ids = np.array([n for n in self.nodes_ids if G.node[n]['val']])
-            self.test_nodes_ids = np.array([n for n in self.nodes_ids if G.node[n]['test']])
-        else:
-            self.train_nodes_ids = np.array([n for n in self.nodes_ids])
-            self.val_nodes_ids = np.array([n for n in self.nodes_ids])
-            self.test_nodes_ids = np.array([n for n in self.nodes_ids])
+        # if not train_all_edge and 0:
+        #     self.train_nodes_ids = np.array([n for n in self.nodes_ids if not G.node[n]['val'] and not G.node[n]['test']])
+        #     self.val_nodes_ids = np.array([n for n in self.nodes_ids if G.node[n]['val']])
+        #     self.test_nodes_ids = np.array([n for n in self.nodes_ids if G.node[n]['test']])
+        # else:
+        self.train_nodes_ids = np.array([n for n in self.nodes_ids])
+        self.val_nodes_ids = np.array([n for n in self.nodes_ids])
+        self.test_nodes_ids = np.array([n for n in self.nodes_ids])
 
         self.nodes = np.array([self.id_map[n] for n in self.nodes_ids])
         self.train_nodes = np.array([self.id_map[n] for n in self.train_nodes_ids])
@@ -165,11 +165,11 @@ class Dataset:
         ## Make sure the graph has edge train_removed annotations
         ## (some datasets might already have this..)
         for edge in G.edges():
-            if (G.node[edge[0]]['val'] or G.node[edge[1]]['val'] or
-                G.node[edge[0]]['test'] or G.node[edge[1]]['test']):
-                G[edge[0]][edge[1]]['train_removed'] = True
-            else:
-                G[edge[0]][edge[1]]['train_removed'] = False
+            # if (G.node[edge[0]]['val'] or G.node[edge[1]]['val'] or
+            #     G.node[edge[0]]['test'] or G.node[edge[1]]['test']):
+            #     G[edge[0]][edge[1]]['train_removed'] = True
+            # else:
+            G[edge[0]][edge[1]]['train_removed'] = False
 
         #Remove isolated train nodes after remove "train_remove" edge from train graph
         # and val nodes and test nodes from original graph
@@ -194,6 +194,8 @@ class Dataset:
 
         if normalize and not self.feats is None:
             from sklearn.preprocessing import StandardScaler
+            # import pdb
+            # pdb.set_trace()
             train_feats = self.feats[self.train_nodes]
             scaler = StandardScaler()
             scaler.fit(train_feats)
@@ -300,6 +302,7 @@ class Dataset:
         print("Removed {0} nodes".format(num_rm_node))
         self.test_nodes = np.array(test_nodes)
         self.test_nodes_ids = np.array(test_nodes_ids)
+        print("Remaining nodes: {}".format(len(self.train_nodes)))
 
     def construct_train_val_deg(self):
         self.deg = np.zeros((len(self.id_map),)).astype(int)
@@ -418,12 +421,13 @@ class Dataset:
         # test_edges = []
         missing = 0
         print("Generate train edges")
-        for n1, n2 in edges:
-            if not n1 in self.G.node or not n2 in self.G.node:
-                missing += 1
-                continue
-            if (self.id_map[n1] in self.train_nodes) and (self.id_map[n2] in self.train_nodes):
-                train_edges.append((self.id_map[n1], self.id_map[n2]))
+        train_edges = [(self.id_map[n1], self.id_map[n2]) for n1, n2 in edges]
+        # for n1, n2 in edges:
+        #     if not n1 in self.G.node or not n2 in self.G.node:
+        #         missing += 1
+        #         continue
+        #     if (self.id_map[n1] in self.train_nodes) and (self.id_map[n2] in self.train_nodes):
+        #         train_edges.append((self.id_map[n1], self.id_map[n2]))
             # elif (self.id_map[n1] in self.train_nodes and self.id_map[n2] in self.val_nodes) \
             # or (self.id_map[n1] in self.val_nodes and self.id_map[n2] in self.train_nodes) \
             # or (self.id_map[n1] in self.val_nodes and self.id_map[n2] in self.val_nodes):
@@ -478,7 +482,7 @@ class Dataset:
 
             if (count+1) % 1000 == 0:
                 print("Done walks for", count, "nodes")
-        print("Done walks for", count + 1, "nodes")
+        # print("Done walks for", count + 1, "nodes")
         if(out_file != None):
             with open(out_file, "w") as fp:
                 fp.write("\n".join([str(p[0]) + "\t" + str(p[1]) for p in pairs]))

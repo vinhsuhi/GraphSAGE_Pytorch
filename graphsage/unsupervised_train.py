@@ -46,7 +46,7 @@ def parse_args():
     parser.add_argument('--neg_sample_size',  default=20,              help='Negative sample size', type=int)
     parser.add_argument('--identity_dim',     default=0,               help='Set to positive value to use identity embedding features of that dimension. Default 0.', type=int)
     parser.add_argument('--load_walks',        default=False,          help="Whether to load walk file.", type=bool)
-    parser.add_argument('--num_walk',         default=50,              help="Number of walk from each node.", type=int)
+    parser.add_argument('--num_walk',         default=1,              help="Number of walk from each node.", type=int)
     parser.add_argument('--walk_len',         default=5,               help="Length of each walk.", type=int)
     parser.add_argument('--seed',             default=123,             help="Random seed", type=int)
     parser.add_argument('--no_feature',       default=False,           help='whether to use features')
@@ -89,9 +89,9 @@ def to_word2vec_format(val_embeddings, nodes, output_file_name, dim, pref=""):
 
 
 def evaluate(model, dataset, args):
-    if dataset.class_map == None:
-        print("Currently not support evaluation without class map.")
-        return -1
+    # if dataset.class_map == None:
+    #     print("Currently not support evaluation without class map.")
+    #     return -1
 
     # Get embeddings of all nodes
     embeddings = [] # embed of all nodes
@@ -111,11 +111,13 @@ def evaluate(model, dataset, args):
                 seen.add(node)
         iter_num += 1
     embeddings = np.vstack(embeddings)
-    train_labels = np.array([dataset.class_map[id] for id in dataset.train_nodes_ids])
-    test_labels = np.array([dataset.class_map[id] for id in dataset.test_nodes_ids])
-    train_embeds = embeddings[[dataset.id_map[id] for id in dataset.train_nodes_ids]]
-    test_embeds = embeddings[[dataset.id_map[id] for id in dataset.test_nodes_ids]]
-    f1_sc = run_regression(train_embeds, train_labels, test_embeds, test_labels)
+    np.save("swiss_emb.npy", embeddings)
+    # train_labels = np.array([dataset.class_map[id] for id in dataset.train_nodes_ids])
+    # test_labels = np.array([dataset.class_map[id] for id in dataset.test_nodes_ids])
+    # train_embeds = embeddings[[dataset.id_map[id] for id in dataset.train_nodes_ids]]
+    # test_embeds = embeddings[[dataset.id_map[id] for id in dataset.test_nodes_ids]]
+    # f1_sc = run_regression(train_embeds, train_labels, test_embeds, test_labels)
+    f1_sc = 0
     return f1_sc
 
 
@@ -146,10 +148,10 @@ def train_(graphsage, train_edges, optimizer, epochs, batch_size = 256, cuda = F
             avg_time = (avg_time * total_steps + time.time() - t) / (total_steps + 1)
 
             if total_steps % args.print_every == 0:
-                mrr = graphsage.accuracy(outputs1, outputs2, neg_outputs)
+                # mrr = graphsage.accuracy(outputs1, outputs2, neg_outputs)
                 print("Iter:", '%03d' %iter,
                     "train_loss=", "{:.5f}".format(loss.item()),
-                    "train_f1_mrr", "{:.5f}".format(mrr),
+                    # "train_f1_mrr", "{:.5f}".format(mrr),
                     "time", "{:.5f}".format(avg_time)
                     )
 
